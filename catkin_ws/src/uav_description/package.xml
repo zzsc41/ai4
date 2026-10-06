@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>uav_description</name>
+  <version>0.0.1</version>
+  <description>
+    无人机多模态智能目标跟踪与制导 —— 模型包：
+    iris 改造件与传感器 URDF/SDF（urdf/）+ 敌机 / 地基雷达模型（models/）+ 网格（meshes/）。
+  </description>
+
+  <maintainer email="demo@todo.todo">demo</maintainer>
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+</package>

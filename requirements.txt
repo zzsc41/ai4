@@ -1,0 +1,9 @@
+# 无人机多模态智能目标跟踪与制导 —— 运行依赖
+#
+# 环境基线：Ubuntu 20.04 / ROS Noetic / Python 3.8.10
+#           numpy 1.17.4（系统自带，未升级，避免影响其他组件）
+#
+# 版本锁定说明（均为 Python 3.8 的最后兼容档位）：
+scikit-learn==1.3.2   # Python 3.8 最后支持版；官方 DBSCAN 所在包（/cluster 使用）
+scipy==1.8.1          # 与 numpy 1.17.4 兼容的最后档（scipy 1.9+ 起要求 numpy>=1.18.5）
+pytest==8.3.5         # Python 3.8 最后支持档（pytest 8.4+ 起要求 Python>=3.9）

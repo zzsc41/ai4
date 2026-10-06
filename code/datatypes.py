@@ -1,0 +1,99 @@
+"""项目自定义数据类型定义（全项目唯一入口）。
+
+约定
+----
+- 本项目所有**自定义数据类型**统一在本文件定义，其余 py 文件一律 ``import`` 引用，
+  不再重复定义。
+- 字段严格照搬 ``design/数据类型.md``，不新增、不虚构。
+
+已定义：
+- 模块 1 · 点迹聚类：:class:`Point3D`（数据类型.md 2.1）、:class:`Cluster`（2.2）；
+- 模块 8 · 状态机（话题消息级输入）：:class:`DetectedTarget`（1.1）、
+  :class:`VisualTrack`（1.3）、:class:`Track`（1.5）。
+
+后续模块的 ``TrackState``、``Detection`` 等亦应加入本文件。
+
+Python 3.8 兼容说明
+-------------------
+为在 3.8 下直接使用 PEP 585 泛型（``list[...]`` / ``tuple[...]``）作为注解，
+本模块启用 ``from __future__ import annotations``（注解延迟求值为字符串）。
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import List, Tuple
+
+__all__ = ["Point3D", "Cluster", "DetectedTarget", "VisualTrack", "Track"]
+
+
+@dataclass
+class Point3D:
+    """雷达点云中的一个三维点（``design/数据类型.md`` 2.1）。"""
+
+    x: float
+    y: float
+    z: float
+    intensity: float = 0.0
+
+
+@dataclass
+class Cluster:
+    """DBSCAN 聚类结果（``design/数据类型.md`` 2.2）。
+
+    属性
+    ----
+    id : int
+        聚类 ID（从 0 起按出现顺序编号）。
+    centroid : tuple[float, float, float]
+        质心 ``(x, y, z)``。
+    points : list[Point3D]
+        簇内点集。
+    size : int
+        簇内点数，恒等于 ``len(points)``。
+    """
+
+    id: int
+    centroid: Tuple[float, float, float]
+    points: List[Point3D]
+    size: int
+
+
+@dataclass
+class DetectedTarget:
+    """一次目标检测结果（``design/数据类型.md`` 1.1，消息 ``DetectedTarget.msg``）。
+
+    ``/detections`` 话题元素。字段与消息定义一一对应：
+    ``class_id`` / ``confidence`` / ``bbox=[x, y, w, h]``。
+    """
+
+    class_id: int
+    confidence: float
+    bbox: Tuple[float, float, float, float]
+
+
+@dataclass
+class VisualTrack:
+    """视觉航迹（``design/数据类型.md`` 1.3，消息 ``VisualTrack.msg``）。
+
+    ``/visual/tracks`` 话题元素。``area_ratio`` 为 bbox 面积 / 画面总面积。
+    """
+
+    id: int
+    bbox: Tuple[float, float, float, float]
+    area_ratio: float
+
+
+@dataclass
+class Track:
+    """雷达航迹（``design/数据类型.md`` 1.5，消息 ``Track.msg``）。
+
+    ``/radar/tracks`` 话题元素。注意与模块 2 的**内部滤波结构**
+    :class:`TrackState`（state/cov）区分——本类为消息级、发布用的结构，
+    ``covariance`` 为 6x6 协方差展平的 36 维序列。
+    """
+
+    id: int
+    position: Tuple[float, float, float]
+    velocity: Tuple[float, float, float]
+    covariance: Tuple[float, ...]
+    age: int
