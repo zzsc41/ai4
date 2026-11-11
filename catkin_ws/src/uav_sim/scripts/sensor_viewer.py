@@ -167,7 +167,8 @@ if __name__=='__main__':
  rospy.init_node('sensor_viewer',disable_signals=True)
  run=args.run or rospy.get_param('~run_dir')
  app=QtWidgets.QApplication(sys.argv);window=Window(run,args.offline,args.self_test);window.show()
- if not args.offline:
+ layout_process=None
+ if not args.offline and rospy.get_param('~gazebo_gui',True):
   # Window discovery and Gazebo transport may wait: keep them off the Qt thread.
   layout_log=(Path(run)/'layout.log').open('w')
   layout_process=subprocess.Popen([sys.executable,str(Path(__file__).with_name('teaching_capture.py')),'layout-live',run],stdout=layout_log,stderr=subprocess.STDOUT)
@@ -181,7 +182,7 @@ if __name__=='__main__':
  # process rather than invoking unsafe SIP destructors. Preserve Qt's exit code.
  timer.stop();window.timer.stop();window.evidence.stop()
  if hasattr(window,'live_timer'):window.live_timer.stop()
- if not args.offline and layout_process.poll() is None:layout_process.terminate()
+ if layout_process is not None and layout_process.poll() is None:layout_process.terminate()
  for sub in getattr(window,'subs',[]):sub.unregister()
  window.manager.stopUpdate()
  rospy.signal_shutdown('viewer closed')

@@ -63,5 +63,5 @@
     <param name="target_motion" value="$(arg dynamic_target)"/>
     <param name="run_dir" value="$(arg run_dir)"/>
   </node>
-  <node if="$(arg camera_view)" pkg="uav_sim" type="sensor_viewer.py" name="sensor_viewer" output="screen" required="true"><param name="run_dir" value="$(arg run_dir)"/></node>
+  <node if="$(arg camera_view)" pkg="uav_sim" type="sensor_viewer.py" name="sensor_viewer" output="screen" required="true"><param name="run_dir" value="$(arg run_dir)"/><param name="gazebo_gui" value="$(arg gui)"/></node>
 </launch>

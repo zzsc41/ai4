@@ -21,8 +21,11 @@ if p.poll() is None:
 try:code=p.wait(timeout=45)
 except subprocess.TimeoutExpired:
  os.killpg(p.pid,signal.SIGTERM);code=p.wait(timeout=10)
+# roslaunch may return zero after a required node failed. Preserve the watchdog cause.
+if (root/'startup_error.txt').exists():code=code or 1
 try:
  manifest=json.loads((root/'run.json').read_text())
+ if (root/'startup_error.txt').exists():manifest['exit_reason']=(root/'startup_error.txt').read_text().strip()
  if os.environ.get('AI4_RECORDING','true')=='true':
   stats=json.loads((root/'statistics.json').read_text())
   if stats.get('status')!='closed':code=code or 1

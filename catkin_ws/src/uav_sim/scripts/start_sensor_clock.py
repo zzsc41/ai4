@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Bounded startup and live data watchdog; never equate process presence with health."""
 import json
+import os
 import queue
 import threading
 import time
@@ -24,6 +25,25 @@ def bounded(call, timeout=10):
     except queue.Empty: raise RuntimeError('Gazebo service did not respond within %ss' % timeout)
     if not ok: raise value
     return value
+
+
+def spectator_readiness(root):
+    """Only accept this run's receipt from its still living GUI process."""
+    receipt = root / 'spectator_view.txt'
+    try:
+        if receipt.stat().st_mtime_ns < (root / 'run.json').stat().st_mtime_ns:
+            return False, 'receipt predates this run'
+        lines = receipt.read_text().splitlines()
+        if lines[0] != 'spectator view verified after both model visuals arrived':
+            return False, 'receipt lacks camera pose verification'
+        pid = int(next(line[4:] for line in lines if line.startswith('pid=')))
+        env = Path('/proc/%d/environ' % pid).read_bytes().split(b'\0')
+        expected = os.fsencode('AI4_VIEW_STATUS=' + str(receipt))
+        if expected not in env:
+            return False, 'GUI process belongs to another run'
+        return True, 'camera pose read back; current GUI process and run verified'
+    except (OSError, ValueError, IndexError, StopIteration) as exc:
+        return False, 'receipt unavailable or invalid: ' + str(exc)
 
 
 if __name__ == '__main__':
@@ -94,7 +114,7 @@ if __name__ == '__main__':
                                recording=rospy.get_param('~recorder_required', False),
                                clock_reset_catching_up=clock_catching_up)
             if rospy.get_param('~gui_required', False):
-                payload['gui_view_ready'] = (root/'spectator_view.txt').exists()
+                payload['gui_view_ready'], payload['gui_view_detail'] = spectator_readiness(root)
                 ready = ready and payload['gui_view_ready']
             if rospy.get_param('~viewer_required', False):
                 try:
@@ -118,6 +138,10 @@ if __name__ == '__main__':
     except rospy.ROSInterruptException:
         pass
     except Exception as exc:
+        if (root/'startup_health.json').exists():
+            failed = json.loads((root/'startup_health.json').read_text())
+            failed.update(status='failed', error=str(exc))
+            (root/'startup_health.json').write_text(json.dumps(failed, indent=2))
         (root/'startup_error.txt').write_text(str(exc)+'\n')
         rospy.logfatal('Full simulation health failed: %s', exc)
         raise
